@@ -1,0 +1,64 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  AvailabilityZone:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Default: us-east-1a
+  InstanceTypePar:
+    Type: String
+    Default: t2.micro
+    Description: Enter instance size. Default is t2.micro.
+  AMI:
+    Type: String
+    Default: ami-052efd3df9dad4825
+    Description: Ubuntu 
+  KeyPairName: 
+    Type: String
+    Default: bootcamp
+    Description: The name of an existing Amazon EC2 key pair in this region to use to SSH into the Amazon EC2 instances.
+
+Resources:
+  WebAppInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      AvailabilityZone: !Ref AvailabilityZone
+      ImageId: !Ref AMI
+      InstanceType: !Ref InstanceTypePar
+      KeyName: !Ref KeyPairName
+      SecurityGroupIds:
+        - !Ref WebAppSecurityGroup
+      UserData:
+        Fn::Base64: |
+          #!/bin/bash -xe
+          sudo apt-get update -y
+          sudo apt-get install nginx -y
+          sudo cat << EOF > /var/www/html/index.nginx-debian.html
+          <!DOCTYPE html>
+            <html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+              <title>Info</title>
+          </head>
+          <body>
+            <div>
+              <h3>Hello world from course Bootcamp DevOps</h3>
+              <h3>Author - RoxsRoss</h3>
+            </div>
+          </body></html>
+          EOF
+      Tags:
+        - Key: Name
+          Value: "bootcamp"
+        - Key: ProjectName
+          Value: "App-Bootcamp"      
+  WebAppSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Join ["-", [webapp-security-group, dev]]
+      GroupDescription: "Allow HTTP/HTTPS and SSH inbound and outbound traffic"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 186.122.105.2/32
